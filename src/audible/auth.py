@@ -9,7 +9,7 @@ import httpx
 import rsa
 from httpx import Cookies
 
-from .activation_bytes import get_activation_bytes as get_ab
+from .activation_bytes import get_activation as get_a
 from .aescipher import AESCipher, detect_file_encryption
 from .exceptions import FileEncryptionError, AuthFlowError, NoRefreshToken
 from .login import login
@@ -360,8 +360,9 @@ class BaseAuthenticator(MutableMapping, httpx.Auth):
             self.refresh_token, self.locale.domain, cookies_domain
         )
 
-    def get_activation_bytes(self, filename=None):
-        return get_ab(self, filename)
+    def get_activation(self, serial=None):
+        return get_a(self, serial)
+
 
     def user_profile(self):
         return user_profile(
