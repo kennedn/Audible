@@ -155,6 +155,54 @@ Or to check the time left before token expires::
 
    auth.access_token_expires
 
+Auth methods and auth flow
+--------------------------
+
+The Authenticator classes supports multiple methods of authentication to the API and/or 
+the audible/amazon web page using the httpx module. These are:
+
+- sign request method (needs a device registration)
+- bearer token method
+- website cookies method
+
+The default mode is used, when adding a Authenticator instance as a keyword 
+argument to a httpx client. On default mode, the sign request auth method is preferred. 
+If the sign method is not available, the bearer token auth method is choosen. If access 
+token is not present or the access token is expired and no refresh token is found, 
+a Exception will be raise. Here is a code example::
+
+   import audible
+   import httpx
+
+   auth = audible.FileAuthenticator(...)  # or audible.LoginAuthenticator
+   with httpx.Client(auth=auth) as client:
+       r = client.get(...)
+
+To make use of website cookies authentication, cookies have to be added as a 
+cookies keyword argument to a httpx client. Cookies are limited to the scope of 
+a top level domain (e.g. com, de, ...). In general case this is the top level 
+domain for a country_code you have selected to login or register to. 
+To get website cookies for another top level domain scope, you can call the 
+method `set_website_cookies_for_country(country_code)` from  `auth` instance. 
+Warning: present website cookies for another country code will be overriden. 
+If you want to keep the new cookies, please make sure to save to file. 
+Usually website cookies are only used to make authenticated requests to the 
+audible or amazon web page. Here is a code example::
+
+   import audible
+
+   auth = audible.FileAuthenticator(FILENAME)
+
+   auth.set_website_cookies_for_country("us")
+   with httpx.Client(cookies=auth.website_cookies) as client:
+       r = client.get("https://www.amazon.com/cpe/yourpayments/wallet?ref_=ya_d_c_pmt_mpo")
+       print(r.text)
+
+   auth.set_website_cookies_for_country("de")
+   with httpx.Client(cookies=auth.website_cookies) as client:
+       r = client.get("https://www.amazon.de/cpe/yourpayments/wallet?ref_=ya_d_c_pmt_mpo")
+       print(r.text)
+
 Activation Bytes
 ================
 

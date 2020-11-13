@@ -7,9 +7,13 @@ from urllib.parse import parse_qs
 import httpx
 
 
-def get_player_id():
-    player_id = base64.encodebytes(hashlib.sha1(b"").digest()).rstrip()
-    return player_id.decode("ascii")
+def get_player_id(serial=None):
+    if serial is None:
+        player_id = hashlib.sha1(b"").digest()
+    else:
+        player_id = serial.encode().ljust(20, b'\0')[:20]
+
+    return base64.encodebytes(player_id).rstrip().decode('ascii')
 
 
 def extract_token_from_url(url):
@@ -18,7 +22,7 @@ def extract_token_from_url(url):
     return query_dict["playerToken"]
 
 
-def get_player_token(auth) -> str:
+def get_player_token(auth, serial=None) -> str:
     with httpx.Client(cookies=auth.website_cookies) as session:
         audible_base_url = f"https://www.audible.{auth.locale.domain}"
         params = {
@@ -26,49 +30,19 @@ def get_player_token(auth) -> str:
             "playerType": "software",
             "bp_ua": "y",
             "playerModel": "Desktop",
-            "playerId": get_player_id(),
+            "playerId": get_player_id(serial),
             "playerManufacturer": "Audible",
             "serial": ""
         }
         resp = session.get(f"{audible_base_url}/player-auth-token",
                            params=params)
-    
+
         player_token = extract_token_from_url(resp.url)[0]
-    
+
         return player_token
 
 
-def extract_activation_bytes(data):
-    if (b"BAD_LOGIN" in data or b"Whoops" in data) or \
-            b"group_id" not in data:
-        print(data)
-        print("\nActivation failed! ;(")
-        raise ValueError("data wrong")
-    a = data.rfind(b"group_id")
-    b = data[a:].find(b")")
-    keys = data[a + b + 1 + 1:]
-    output = []
-    output_keys = []
-    # each key is of 70 bytes
-    for i in range(0, 8):
-        key = keys[i * 70 + i:(i + 1) * 70 + i]
-        h = binascii.hexlify(bytes(key))
-        h = [h[i:i+2] for i in range(0, len(h), 2)]
-        h = b','.join(h)
-        output_keys.append(h)
-        output.append(h.decode("utf-8"))
-
-    # only 4 bytes of output_keys[0] are necessary for decryption! ;)
-    activation_bytes = output_keys[0].replace(b",", b"")[0:8]
-    # get the endianness right (reverse string in pairs of 2)
-    activation_bytes = b"".join(reversed([activation_bytes[i:i+2] for i in
-                                         range(0, len(activation_bytes), 2)]))
-    activation_bytes = activation_bytes.decode("ascii")
-
-    return activation_bytes, output
-
-
-def fetch_activation_bytes(player_token, filename=None):
+def fetch_activation(player_token):
 
     base_url_license = "https://www.audible.com"
     rurl = base_url_license + "/license/licenseForCustomerToken"
@@ -92,19 +66,14 @@ def fetch_activation_bytes(player_token, filename=None):
         resp = session.get(rurl, params=params)
         register_response_content = resp.content
 
-        if filename:
-            pathlib.Path(filename).write_bytes(register_response_content)
-
-        activation_bytes, _ = extract_activation_bytes(register_response_content)
-
         session.get(rurl, params=dparams)
 
-        return activation_bytes
+        return register_response_content.rstrip()
 
 
-def get_activation_bytes(auth, filename=None):
+def get_activation(auth, serial=None):
 
-    player_token = get_player_token(auth)
-    activation_bytes = fetch_activation_bytes(player_token, filename)
+    player_token = get_player_token(auth, serial)
+    activation_bytes = fetch_activation(player_token)
 
     return activation_bytes
