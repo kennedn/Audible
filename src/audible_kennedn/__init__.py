@@ -3,7 +3,7 @@
 from .client import Client, AsyncClient
 from .auth import LoginAuthenticator, FileAuthenticator
 from ._logging import log_helper
-from audible._version import __version__
+from audible_kennedn._version import __version__
 
 
 __all__ = [

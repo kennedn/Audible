@@ -1,6 +1,6 @@
 /src/*
-!/src/audible
-/src/audible/*.bak
+!/src/audible_kennedn
+/src/audible_kennedn/*.bak
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

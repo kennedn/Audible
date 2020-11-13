@@ -18,7 +18,7 @@ here = pathlib.Path(__file__).parent
 
 long_description = (here / 'README.md').read_text('utf-8')
 
-about = (here / 'src' / 'audible' / '_version.py').read_text('utf-8')
+about = (here / 'src' / 'audible_kennedn' / '_version.py').read_text('utf-8')
 
 
 def read_from_file(key):
