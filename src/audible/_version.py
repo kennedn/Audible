@@ -1,4 +1,4 @@
-__title__ = "audible-kennedn"
+__title__ = "audible_kennedn"
 __description__ = "A(Sync) Interface for internal Audible API written in " \
                   "pure Python."
 __url__ = "https://github.com/kennedn/audible"
