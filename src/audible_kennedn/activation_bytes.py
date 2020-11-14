@@ -68,7 +68,7 @@ def fetch_activation(player_token):
 
         session.get(rurl, params=dparams)
 
-        return register_response_content.rstrip()
+        return register_response_content
 
 
 def get_activation(auth, serial=None):
